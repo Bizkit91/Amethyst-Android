@@ -1,0 +1,42 @@
+name: Build Android APK
+
+# Этот триггер позволяет вам нажать кнопку для запуска сборки вручную
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Скачиваем код из вашего форка
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Устанавливаем Java (версия 17 самая универсальная)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      # 3. Находим файл Gradle и даем права на запуск
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      # 4. Запускаем сборку. 
+      # В 99% случаев команда ./gradlew assembleDebug соберет проект.
+      # Если в проекте несколько модулей, может потребоваться ./gradlew :app:assembleDebug
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      # 5. Самый важный шаг: сохраняем готовый APK, чтобы вы могли его скачать
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            # Если папка называется не 'app', а, например, 'mobile', 
+            # измените путь на: mobile/build/outputs/apk/debug/*.apk
